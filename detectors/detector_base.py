@@ -3,6 +3,6 @@ from playlist.hls_parser import HLSParser
 
 
 class DetectorBase(ABC):
-    @abstractmethod()
+    @abstractmethod
     def detect(self, hls_parser: HLSParser):
-        ...
+        pass

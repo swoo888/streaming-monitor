@@ -20,6 +20,7 @@ class HLSParser:
 
     NO_VTT_NUM = -1
     NO_TS_NUM = -1
+    NO_RESOLUTION = -1
 
     def __init__(self, uri, data_filepath=None) -> None:
         self._m3u8_item = None
@@ -63,10 +64,16 @@ class HLSParser:
     def process_segments(self) -> None:
         segments = self._m3u8_item.segments
         for segment in segments:
-            segment.resolution = self.get_resolution(segment.absolute_uri)
-            segment.vtt_number = self.get_vtt_num(segment.absolute_uri)
-            segment.ts_number = self.get_ts_num(segment.absolute_uri)
-            logging.info(f"resolution is: {segment.resolution}")
+            absolute_uri = self.get_absolute_uri(segment)
+            segment.resolution = self.get_resolution(absolute_uri)
+            segment.vtt_num = self.get_vtt_num(absolute_uri)
+            segment.ts_num = self.get_ts_num(absolute_uri)
+
+    def get_absolute_uri(self, segment: m3u8.model.Segment):
+        try:
+            return segment.absolute_uri
+        except:
+            return ""
 
     def get_vtt_num(self, seg_uri) -> int:
         res = self._vtt_match.search(seg_uri)
@@ -83,7 +90,8 @@ class HLSParser:
     def get_resolution(self, seg_uri) -> int:
         res = self._resolution_match.search(seg_uri)
         if res is None:
-            raise Exception("No resolution in uri: {}".format(seg_uri))
+            logging.warning(f"No resolution in uri: {seg_uri}")
+            return HLSParser.NO_RESOLUTION
         return int(res.group(1))
 
     @property

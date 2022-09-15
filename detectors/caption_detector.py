@@ -1,4 +1,4 @@
-from detector_base import DetectorBase
+from detectors.detector_base import DetectorBase
 import logging
 from playlist.hls_parser import HLSParser
 
@@ -13,15 +13,15 @@ class CaptionDetector(DetectorBase):
 
     def detect(self, hls_parser) -> bool:
         self._hls_parser = hls_parser
-        self.get_vtt_ts()
-        if not self.check_caption():
+        self.fill_vtt_ts()
+        res = self.check_caption()
+        if not res:
             logging.warning(
                 f"Found caption mismatch. uri: ${self._hls_parser.uri}, media segment {self._hls_parser.media_sequence}"
             )
-            return True
-        return False
+        return res
 
-    def get_vtt_ts(self):
+    def fill_vtt_ts(self):
         vtt_list = [
             segment.vtt_num
             for segment in self._hls_parser.segments
@@ -42,11 +42,9 @@ class CaptionDetector(DetectorBase):
             self._previous_media_sequence = cur_media_sequence
         # media sequence advances to next number, check if previous sequence is matched
         if cur_media_sequence != self._previous_media_sequence:
-            ts_list = self._ts_map.get(self._previous_media_sequence, [])
-            vtt_list = self._vtt_map.get(self._previous_media_sequence, [])
+            ts_list = self._ts_map.pop(self._previous_media_sequence, [])
+            vtt_list = self._vtt_map.pop(self._previous_media_sequence, [])
+            self._previous_media_sequence = cur_media_sequence
             if set(ts_list) != set(vtt_list):
                 return False
-        del self._ts_map[self._previous_media_sequence]
-        del self._vtt_map[self._previous_media_sequence]
-        self._previous_media_sequence = cur_media_sequence
         return True
