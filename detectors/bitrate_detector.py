@@ -1,4 +1,4 @@
-from detector_base import DetectorBase
+from detectors.detector_base import DetectorBase
 import logging
 from playlist.hls_parser import HLSParser
 
@@ -18,5 +18,5 @@ class BitrateDetector(DetectorBase):
                     f"!!!!resolution shift, uri: {segment.absolute_uri}, "
                     f"resolution: {resolution}"
                 )
-                return True
-        return False
+                return False
+        return True
